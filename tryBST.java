@@ -1,16 +1,37 @@
-import java.util.Arrays;
-public class tryBST{
-// The GOOGLE AI Mode and VS Code Agent was consulted on 
-// the duration of the creation this practical
-// Testing the sync
+import java.util.*;
 
- tNode root;
+/**
+ * This program implements a binary search tree (BST) with the following features
+ * Consulted Gemini (Google AI) for recursion optimization and VS code Agent
+ * iterative balanced tree construction.
+ */
+public class tryBST {
+    tNode root;
+
+    void buildBalanced(int n) {
+        int limit = (int) Math.pow(2, n) - 1;
+        Queue<int[]> queue = new LinkedList<>();
+        queue.add(new int[]{1, limit});
+
+        while (!queue.isEmpty()) {
+            int[] range = queue.poll();
+            int low = range[0];
+            int high = range[1];
+
+            if (low <= high) {
+                int mid = low + (high - low) / 2;
+                insert(mid);
+                queue.add(new int[]{low, mid - 1});
+                queue.add(new int[]{mid + 1, high});
+            }
+        }
+    }
 
     void insert(int key) {
         root = insertRec(root, key);
     }
 
-    tNode insertRec(tNode root, int key) {
+    private tNode insertRec(tNode root, int key) {
         if (root == null) return new tNode(key);
         if (key < root.data) root.left = insertRec(root.left, key);
         else if (key > root.data) root.right = insertRec(root.right, key);
@@ -21,105 +42,90 @@ public class tryBST{
         root = removeEvensRec(root);
     }
 
-    tNode removeEvensRec(tNode node) {
+    private tNode removeEvensRec(tNode node) {
         if (node == null) return null;
 
         node.left = removeEvensRec(node.left);
         node.right = removeEvensRec(node.right);
 
         if (node.data % 2 == 0) {
-            return deleteNode(node, node.data);
+           
+            if (node.left == null) return node.right;
+            if (node.right == null) return node.left;
+            
+            tNode temp = node.right;
+            while (temp.left != null) temp = temp.left;
+            node.data = temp.data;
+            node.right = deleteNode(node.right, temp.data);
         }
         return node;
     }
 
-    tNode deleteNode(tNode root, int key) {
+    private tNode deleteNode(tNode root, int key) {
         if (root == null) return null;
         if (key < root.data) root.left = deleteNode(root.left, key);
         else if (key > root.data) root.right = deleteNode(root.right, key);
         else {
             if (root.left == null) return root.right;
-            else if (root.right == null) return root.left;
-            root.data = minValue(root.right);
-            root.right = deleteNode(root.right, root.data);
+            if (root.right == null) return root.left;
+            tNode temp = root.right;
+            while (temp.left != null) temp = temp.left;
+            root.data = temp.data;
+            root.right = deleteNode(root.right, temp.data);
         }
         return root;
-    }
-
-    int minValue(tNode root) {
-        int minv = root.data;
-        while (root.left != null) {
-            minv = root.left.data;
-            root = root.left;
-        }
-        return minv;
     }
 
     boolean isBST() {
         return isBSTUtil(root, Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
-    boolean isBSTUtil(tNode node, int min, int max) {
+    private boolean isBSTUtil(tNode node, int min, int max) {
         if (node == null) return true;
         if (node.data < min || node.data > max) return false;
-        return (isBSTUtil(node.left, min, node.data - 1) &&
-                isBSTUtil(node.right, node.data + 1, max));
-    }
-
-    void buildBalanced(int low, int high) {
-        if (low > high) return;
-        int mid = low + (high - low) / 2;
-        insert(mid);
-        buildBalanced(low, mid - 1);
-        buildBalanced(mid + 1, high);
+        return isBSTUtil(node.left, min, node.data - 1) && 
+               isBSTUtil(node.right, node.data + 1, max);
     }
 
     public static void main(String[] args) {
-        int n = 20;
-        int limit = (int) Math.pow(2, n) - 1;
+        int n = 20; // Start with n=7 for testing as per instructions
         int repetitions = 30;
-
-        long[] populateTimes = new long[repetitions];
-        long[] removeTimes = new long[repetitions];
+        long[] pTimes = new long[repetitions];
+        long[] rTimes = new long[repetitions];
 
         for (int i = 0; i < repetitions; i++) {
             tryBST tree = new tryBST();
-
+            
             long start = System.currentTimeMillis();
-            tree.buildBalanced(1, limit);
-            populateTimes[i] = System.currentTimeMillis() - start;
+            tree.buildBalanced(n);
+            pTimes[i] = System.currentTimeMillis() - start;
 
-            if (i == 0 && !tree.isBST()) System.out.println("BST Error!");
+            if (i == 0 && !tree.isBST()) System.out.println("Error: Not a BST");
 
             start = System.currentTimeMillis();
             tree.removeEvens();
-            removeTimes[i] = System.currentTimeMillis() - start;
+            rTimes[i] = System.currentTimeMillis() - start;
+            
+         
         }
 
-        printStats("Populate tree", limit, populateTimes);
-        printStats("Remove evens", limit, removeTimes);
+        System.out.printf("%-25s %-10s %-15s %-10s\n", "Method", "Keys n", "Avg Time(ms)", "SD");
+        printStats("Populate tree", n, pTimes);
+        printStats("Remove evens", n, rTimes);
     }
 
     static void printStats(String method, int n, long[] times) {
         double avg = Arrays.stream(times).average().orElse(0);
-        double sd = 0;
-        for (long t : times) sd += Math.pow(t - avg, 2);
-        sd = Math.sqrt(sd / times.length);
-
+        double var = 0;
+        for (long t : times) var += Math.pow(t - avg, 2);
+        double sd = Math.sqrt(var / times.length);
         System.out.printf("%-25s %-10d %-15.2f %.2f\n", method, n, avg, sd);
     }
-
-
-
-
 }
+
 class tNode {
     int data;
     tNode left, right;
-
-    public tNode(int item) {
-        data = item;
-        left = right = null;
-    }
+    public tNode(int item) { data = item; }
 }
 
