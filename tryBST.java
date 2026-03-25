@@ -110,8 +110,8 @@ public class tryBST {
         }
 
         System.out.printf("%-25s %-10s %-15s %-10s\n", "Method", "Keys n", "Avg Time(ms)", "SD");
-        printStats("Populate tree", n, pTimes);
-        printStats("Remove evens", n, rTimes);
+        printStats("Populated tree", n, pTimes);
+        printStats("Removed even", n, rTimes);
     }
 
     static void printStats(String method, int n, long[] times) {
