@@ -88,7 +88,7 @@ public class tryBST {
     }
 
     public static void main(String[] args) {
-        int n = 20; // Start with n=7 for testing as per instructions
+        int n = 20; //
         int repetitions = 30;
         long[] pTimes = new long[repetitions];
         long[] rTimes = new long[repetitions];
